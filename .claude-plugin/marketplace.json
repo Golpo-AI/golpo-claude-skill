@@ -1,0 +1,19 @@
+{
+  "name": "GolpoSkill",
+  "owner": {
+    "name": "Golpo AI",
+    "email": "support@golpoai.com",
+    "url": "https://video.golpoai.com"
+  },
+  "plugins": [
+    {
+      "name": "golpo",
+      "source": "./plugins/golpo",
+      "description": "Generate AI videos with Golpo from prompts, scripts, audio, or documents.",
+      "version": "0.1.0",
+      "homepage": "https://video.golpoai.com",
+      "category": "media",
+      "tags": ["video", "ai-video", "explainer", "podcast-to-video"]
+    }
+  ]
+}

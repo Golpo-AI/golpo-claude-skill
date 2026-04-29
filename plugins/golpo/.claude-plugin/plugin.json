@@ -1,0 +1,21 @@
+{
+  "name": "golpo",
+  "version": "0.1.0",
+  "description": "Generate AI videos with Golpo from prompts, scripts, audio, or documents.",
+  "author": {
+    "name": "Golpo AI",
+    "email": "support@golpoai.com",
+    "url": "https://video.golpoai.com"
+  },
+  "homepage": "https://video.golpoai.com",
+  "repository": "https://github.com/golpoai/claude-skill",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "golpo",
+    "ai-video",
+    "explainer",
+    "podcast-to-video",
+    "script-to-video"
+  ]
+}
