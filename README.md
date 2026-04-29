@@ -14,19 +14,20 @@ Claude: [submits → polls → renders] -> https://video.golpoai.com/v/...
 
 ### Via Claude Code marketplace (recommended)
 
+In the Claude Code terminal CLI:
+
 ```text
-/plugin marketplace add golpoai/claude-skill
+/plugin marketplace add Golpo-AI/golpo-claude-skill
 /plugin install golpo@GolpoSkill
 ```
 
-(Replace `golpoai/claude-skill` with the actual GitHub `<org>/<repo>` once
-this is hosted there. Until then, point it at this directory:
-`/plugin marketplace add /Users/you/path/to/GolpoSkill`.)
+`golpo` = the plugin name; `GolpoSkill` = the marketplace name. Both are
+case-sensitive.
 
-### Manual
+### Manual clone
 
 ```bash
-git clone https://github.com/golpoai/claude-skill.git ~/.claude/plugins/golpo
+git clone https://github.com/Golpo-AI/golpo-claude-skill.git ~/.claude/plugins/golpo
 ```
 
 Restart Claude Code; the `golpo` skill will register automatically.
@@ -98,18 +99,22 @@ GolpoSkill/                          # marketplace root
                     └── full-payload.md
 ```
 
-## Hosting your own copy
+## Forking / self-hosting
 
-To host this so anyone can install it from your repo:
+To run this from your own GitHub repo:
 
-1. Push this directory to a public GitHub repo.
+1. Fork or clone this repo and push to your `<org>/<repo>`.
 2. Tell users:
    ```
-   /plugin marketplace add <your-gh-org>/<repo>
+   /plugin marketplace add <your-org>/<repo>
    /plugin install golpo@GolpoSkill
    ```
-3. Bump `version` in `.claude-plugin/plugin.json` and
-   `.claude-plugin/marketplace.json` together when shipping changes.
+3. When shipping changes, bump `version` in **both**
+   `plugins/golpo/.claude-plugin/plugin.json` and
+   `.claude-plugin/marketplace.json` (keep them in sync), then optionally tag
+   a release: `git tag v0.2.0 && git push --tags`.
+
+End users update with `/plugin update golpo`.
 
 ## Troubleshooting
 
