@@ -27,3 +27,4 @@ golpo-smoke-test-results.xlsx
 # Defensive: never accidentally commit a Golpo API key file
 .golpo/
 api_key
+.local/
