@@ -12,10 +12,13 @@
 
 ```text
 You:    "Make a 30-second video about why the sky is blue."
-Claude: ✓ Submitted. Polling… 12% … 47% … 94% … done.
-        Saved to ~/Golpo/videos/20260429-015405_why-is-the-sky-blue_a1b2c3d4.mp4
-        Also at https://video.golpoai.com/...
+Claude: ✓ Submitted (job 1b489b1c…). Polling…
+          status=generating … status=generating … status=completed
+        Saved to ~/Golpo/videos/20260429-015856_why-is-the-sky-blue_1b489b1c.mp4
+        Hosted at https://golpo-podcast-inputs.s3.us-east-2.amazonaws.com/files/894abde8-…mp4
 ```
+
+> Real transcript from a smoke test. Filename and URLs are unaltered.
 
 ---
 
