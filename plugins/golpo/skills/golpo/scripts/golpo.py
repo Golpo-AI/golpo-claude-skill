@@ -5,26 +5,32 @@ Subcommands:
   check                    Verify python/requests/api-key state.
   auth [--key K] [--force] Save API key to ~/.golpo/api_key (0600).
   upload <path>            Upload audio/document/image; print {file_url, ...}.
-  generate <flags...>      Submit job, poll, print VIDEO_URL=<url> on success.
+  generate <flags...>      Submit job, poll, download mp4, print VIDEO_FILE/URL.
   status <job_id>          Print one status payload.
-  get <video_id>           Print video metadata payload.
+  get <video_id> [...]     Print metadata; download mp4 unless --no_download.
   list [--limit] [--offset] Print recent videos.
 
 API key resolution: GOLPO_API_KEY env var -> ~/.golpo/api_key -> error.
+
+Downloaded video destination resolution (in priority order):
+  --output_dir flag -> GOLPO_VIDEO_DIR env var -> ~/Golpo/videos/
 """
 
 import argparse
 import json
 import os
 import pathlib
+import re
 import sys
 import time
 import warnings
+from datetime import datetime
 
 warnings.filterwarnings("ignore", message=".*OpenSSL.*")
 
 API_BASE = os.environ.get("GOLPO_API_BASE", "https://api.golpoai.com/api/v1")
 KEY_PATH = pathlib.Path.home() / ".golpo" / "api_key"
+DEFAULT_VIDEO_DIR = pathlib.Path.home() / "Golpo" / "videos"
 TERMINAL_OK = {"completed", "ready", "done", "success", "finished"}
 TERMINAL_FAIL = {"failed", "error", "errored", "cancelled", "canceled"}
 
@@ -83,21 +89,86 @@ def lazy_requests():
         sys.exit(3)
 
 
-def api_request(method, path, json_body=None, files=None, data=None, stream=False):
+def slugify(text, max_len=50):
+    if not text:
+        return "video"
+    s = re.sub(r"[^a-zA-Z0-9\s-]", "", text)
+    s = re.sub(r"\s+", "-", s.strip()).lower()
+    s = s[:max_len].rstrip("-")
+    return s or "video"
+
+
+def resolve_output_dir(cli_value):
+    if cli_value:
+        return pathlib.Path(cli_value).expanduser()
+    env_value = os.environ.get("GOLPO_VIDEO_DIR")
+    if env_value:
+        return pathlib.Path(env_value).expanduser()
+    return DEFAULT_VIDEO_DIR
+
+
+def download_video(video_url, output_dir, prompt=None, video_id=None):
+    """Stream a video to disk. Returns the absolute Path on success, None on failure."""
+    requests = lazy_requests()
+    out_dir = pathlib.Path(output_dir).expanduser()
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        sys.stderr.write(f"WARNING: cannot create output dir {out_dir}: {e}\n")
+        return None
+
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    parts = [ts, slugify(prompt) if prompt else "video"]
+    if video_id:
+        parts.append(str(video_id)[:8])
+    ext = pathlib.Path(video_url.split("?", 1)[0]).suffix or ".mp4"
+    out_path = out_dir / ("_".join(parts) + ext)
+
+    try:
+        with requests.get(video_url, stream=True, timeout=600) as r:
+            r.raise_for_status()
+            with out_path.open("wb") as f:
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        f.write(chunk)
+    except Exception as e:
+        if out_path.exists():
+            try:
+                out_path.unlink()
+            except OSError:
+                pass
+        sys.stderr.write(f"WARNING: download failed: {e}\n")
+        return None
+    return out_path.resolve()
+
+
+def api_request(method, path, json_body=None, files=None, data=None, stream=False,
+                retry_5xx=False):
     requests = lazy_requests()
     url = API_BASE + path
     headers = {"x-api-key": get_key()}
     if json_body is not None:
         headers["Content-Type"] = "application/json"
-    try:
-        r = requests.request(
-            method, url, headers=headers,
-            json=json_body, files=files, data=data,
-            timeout=120, stream=stream,
-        )
-    except requests.exceptions.RequestException as e:
-        sys.stderr.write(f"ERROR: network failure: {e}\n")
-        sys.exit(4)
+
+    attempts = 0
+    while True:
+        attempts += 1
+        try:
+            r = requests.request(
+                method, url, headers=headers,
+                json=json_body, files=files, data=data,
+                timeout=120, stream=stream,
+            )
+        except requests.exceptions.RequestException as e:
+            if retry_5xx and attempts < 5:
+                time.sleep(min(2 ** attempts, 30))
+                continue
+            sys.stderr.write(f"ERROR: network failure: {e}\n")
+            sys.exit(4)
+        if retry_5xx and 500 <= r.status_code < 600 and attempts < 5:
+            time.sleep(min(2 ** attempts, 30))
+            continue
+        break
 
     if r.status_code == 401:
         sys.stderr.write(
@@ -210,9 +281,28 @@ def cmd_upload(args):
         sys.exit(9)
     out = r.json()
     print(json.dumps(out, indent=2))
-    file_url = out.get("file_url") or out.get("upload_url")
+    upload_url = out.get("upload_url")
+    file_url = out.get("file_url")
+    content_type = out.get("content_type") or "application/octet-stream"
+    if upload_url:
+        put_headers = {"Content-Type": content_type}
+        try:
+            with path.open("rb") as f:
+                pr = requests.put(upload_url, data=f, headers=put_headers,
+                                  timeout=600)
+        except requests.exceptions.RequestException as e:
+            sys.stderr.write(f"ERROR: PUT to S3 failed: {e}\n")
+            sys.exit(4)
+        if not pr.ok:
+            sys.stderr.write(
+                f"ERROR: PUT upload failed: HTTP {pr.status_code}: {pr.text[:300]}\n"
+            )
+            sys.exit(9)
+        print(f"PUT_OK={pr.status_code}")
     if file_url:
         print(f"FILE_URL={file_url}")
+    elif upload_url:
+        print(f"FILE_URL={upload_url}")
 
 
 def coerce_value(name, raw):
@@ -276,7 +366,7 @@ def cmd_generate(args):
     deadline = time.time() + args.max_wait_seconds
     last_progress = -1
     while time.time() < deadline:
-        st = api_request("GET", f"/videos/status/{job_id}")
+        st = api_request("GET", f"/videos/status/{job_id}", retry_5xx=True)
         status = (st.get("status") or "").strip().lower()
         progress = st.get("progress")
         video_url = st.get("video_url")
@@ -292,6 +382,16 @@ def cmd_generate(args):
                 meta = api_request("GET", f"/videos/{st['video_id']}")
                 video_url = meta.get("video_url")
             if video_url:
+                if not args.no_download:
+                    out_dir = resolve_output_dir(args.output_dir)
+                    print(f"downloading -> {out_dir}", flush=True)
+                    local = download_video(
+                        video_url, out_dir,
+                        prompt=payload.get("prompt"),
+                        video_id=video_id or st.get("video_id"),
+                    )
+                    if local:
+                        print(f"VIDEO_FILE={local}")
                 print(f"VIDEO_URL={video_url}")
                 return
             sys.stderr.write(f"ERROR: status terminal but no video_url: {st}\n")
@@ -316,8 +416,20 @@ def cmd_status(args):
 def cmd_get(args):
     out = api_request("GET", f"/videos/{args.video_id}")
     print(json.dumps(out, indent=2))
-    if out.get("video_url"):
-        print(f"VIDEO_URL={out['video_url']}")
+    video = out.get("video", out) if isinstance(out, dict) else {}
+    video_url = video.get("video_url")
+    if video_url:
+        if not args.no_download:
+            out_dir = resolve_output_dir(args.output_dir)
+            print(f"downloading -> {out_dir}", flush=True)
+            local = download_video(
+                video_url, out_dir,
+                prompt=video.get("title") or video.get("prompt"),
+                video_id=args.video_id,
+            )
+            if local:
+                print(f"VIDEO_FILE={local}")
+        print(f"VIDEO_URL={video_url}")
 
 
 def cmd_list(args):
@@ -345,6 +457,11 @@ def add_generate_args(p):
                    help="poll cap (default 30 min)")
     p.add_argument("--print_payload", action="store_true",
                    help="echo the JSON payload before submitting")
+    p.add_argument("--output_dir", default=None,
+                   help="where to save the mp4 (default ~/Golpo/videos/, "
+                        "or $GOLPO_VIDEO_DIR if set)")
+    p.add_argument("--no_download", action="store_true",
+                   help="skip downloading the rendered mp4 to disk")
 
 
 def main():
@@ -375,8 +492,13 @@ def main():
     ps.add_argument("job_id")
     ps.set_defaults(func=cmd_status)
 
-    pgv = sub.add_parser("get", help="fetch a video's metadata by id")
+    pgv = sub.add_parser("get", help="fetch a video's metadata by id and download it")
     pgv.add_argument("video_id")
+    pgv.add_argument("--output_dir", default=None,
+                     help="where to save the mp4 (default ~/Golpo/videos/, "
+                          "or $GOLPO_VIDEO_DIR if set)")
+    pgv.add_argument("--no_download", action="store_true",
+                     help="skip downloading the mp4 to disk")
     pgv.set_defaults(func=cmd_get)
 
     pl = sub.add_parser("list", help="list recent videos")

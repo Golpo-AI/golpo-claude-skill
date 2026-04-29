@@ -173,23 +173,35 @@ python3 .../golpo.py generate \
 The helper:
 1. Submits `POST /videos/generate` and prints `JOB_ID=...` and `VIDEO_ID=...`.
 2. Polls `GET /videos/status/{job_id}` with backoff (5 s → 30 s, capped at 30
-   min by default; use `--max_wait_seconds N` to extend).
+   min by default; use `--max_wait_seconds N` to extend). Polling is resilient
+   to transient 5xx responses (up to 5 retries with exponential backoff).
 3. Streams `progress=N% status=<state>` lines while it polls — relay these to
    the user as short progress updates.
-4. On success, prints `VIDEO_URL=<url>` and exits 0.
-5. On failure, prints `ERROR: ...` to stderr and exits non-zero.
+4. **Auto-downloads the rendered MP4 to `~/Golpo/videos/`** by default.
+   Filename pattern: `YYYYMMDD-HHMMSS_<prompt-slug>_<video-id-short>.mp4`.
+   Override with `--output_dir <path>` or set `GOLPO_VIDEO_DIR` env var.
+   Skip the download with `--no_download`.
+5. On success, prints `VIDEO_FILE=/abs/path.mp4` then `VIDEO_URL=<url>` and
+   exits 0.
+6. On failure, prints `ERROR: ...` to stderr and exits non-zero.
 
 ## 6. Show the result
 
-When `VIDEO_URL=...` appears, present the link to the user as a clickable
-markdown link plus a one-line summary of the params used, e.g.:
+When `VIDEO_FILE=...` and `VIDEO_URL=...` appear, present **both** to the user
+— the local file (they can play it immediately by clicking) and the URL (for
+sharing). One-line summary of the params used, e.g.:
 
-> Video ready: [Why is the sky blue?](https://...). 30 s, 16:9, solo-female-3,
-> English, Sketch Classic. Re-fetch later with
+> Video ready, saved to
+> [`~/Golpo/videos/20260429-015405_why-is-the-sky-blue_a1b2c3d4.mp4`](file:///Users/.../Golpo/videos/20260429-015405_why-is-the-sky-blue_a1b2c3d4.mp4).
+> 30 s, 16:9, solo-female-3, English, Sketch Classic. Hosted at
+> [Golpo](https://...). Re-download later with
 > `python3 .../golpo.py get <VIDEO_ID>`.
 
-If the user wants to make adjustments, regenerate with the changed flags. Note
-that uploaded **document** URLs cannot be reused — re-upload to retry.
+If the user wants the file somewhere else, regenerate with `--output_dir <dir>`
+or `export GOLPO_VIDEO_DIR=<dir>` once. To skip downloading (URL only), pass
+`--no_download`. If the user wants to make adjustments, regenerate with the
+changed flags. Note that uploaded **document** URLs cannot be reused —
+re-upload to retry.
 
 ## 7. Error handling
 

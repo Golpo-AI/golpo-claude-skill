@@ -10,6 +10,12 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Office/Excel lock files
+~$*
+
+# Local smoke-test artifacts
+golpo-smoke-test-results.xlsx
+
 # Editors
 .vscode/
 .idea/
