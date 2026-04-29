@@ -1,8 +1,9 @@
 # Golpo Skill for Claude Code
 
+[![CI](https://github.com/Golpo-AI/golpo-claude-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/Golpo-AI/golpo-claude-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)]()
-[![Plugin: 0.1.1](https://img.shields.io/badge/plugin-v0.1.1-green.svg)]()
+[![Plugin: 0.1.2](https://img.shields.io/badge/plugin-v0.1.2-green.svg)]()
 
 > Generate AI videos with [Golpo](https://video.golpoai.com) directly from any
 > Claude Code conversation. Give Claude a prompt, a script, an audio file, or

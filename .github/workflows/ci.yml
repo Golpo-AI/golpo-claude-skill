@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate plugin (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.10', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install runtime dependency
+        run: pip install --quiet 'requests>=2.28'
+
+      - name: Compile-check helper
+        run: python -m py_compile plugins/golpo/skills/golpo/scripts/golpo.py
+
+      - name: Validate plugin manifests are valid JSON
+        run: |
+          python -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+          python -c "import json; json.load(open('plugins/golpo/.claude-plugin/plugin.json'))"
+
+      - name: Manifest cross-checks (versions in sync, names match)
+        run: |
+          python - <<'PY'
+          import json
+          m = json.load(open('.claude-plugin/marketplace.json'))
+          p = json.load(open('plugins/golpo/.claude-plugin/plugin.json'))
+          plug = m['plugins'][0]
+          assert plug['name'] == p['name'], \
+              f"name mismatch: marketplace={plug['name']!r} plugin={p['name']!r}"
+          assert plug['version'] == p['version'], \
+              f"version mismatch: marketplace={plug['version']!r} plugin={p['version']!r}"
+          assert plug['source'].startswith('./'), \
+              f"plugin source must be a relative path starting with './' (got {plug['source']!r})"
+          print(f"OK: {plug['name']}@{plug['version']} from {plug['source']}")
+          PY
+
+      - name: SKILL.md frontmatter sanity
+        run: |
+          python - <<'PY'
+          import re
+          text = open('plugins/golpo/skills/golpo/SKILL.md').read()
+          m = re.match(r'^---\n(.*?)\n---\n', text, re.DOTALL)
+          assert m, "SKILL.md missing YAML frontmatter delimiters"
+          fm = {}
+          for line in m.group(1).split('\n'):
+              k, _, v = line.partition(':')
+              fm[k.strip()] = v.strip()
+          assert fm.get('name') == 'golpo', f"name field = {fm.get('name')!r}"
+          desc = fm.get('description', '')
+          assert len(desc) > 50, f"description too short ({len(desc)} chars) — Claude needs this for trigger matching"
+          print(f"OK: SKILL.md frontmatter valid; description length = {len(desc)}")
+          PY
+
+      - name: Every helper subcommand has working --help
+        run: |
+          for cmd in check auth upload generate status get list; do
+            python plugins/golpo/skills/golpo/scripts/golpo.py "$cmd" --help > /dev/null
+            echo "  $cmd --help: OK"
+          done
+
+      - name: Helper environment check (no API call)
+        run: python plugins/golpo/skills/golpo/scripts/golpo.py check
+
+      - name: Payload coercion roundtrip (no API call)
+        run: |
+          python - <<'PY'
+          import sys, json
+          sys.path.insert(0, 'plugins/golpo/skills/golpo/scripts')
+          import golpo
+
+          class A: pass
+          a = A()
+          for f in golpo.GENERATE_FIELDS: setattr(a, f, None)
+          for f in golpo.GENERATE_LIST_FIELDS: setattr(a, f, None)
+
+          # Booleans, numeric timing, list args — all should coerce to API-correct types.
+          a.prompt = 'Why is the sky blue?'
+          a.timing = 0.5
+          a.use_lineart_2_style = False
+          a.use_2_0_style = 'true'
+          a.video_type = 'long'
+          a.upload_urls = ['https://x/a.pdf', 'https://x/b.pdf']
+
+          p = golpo.build_generate_payload(a)
+          assert p['timing'] == '0.5' and isinstance(p['timing'], str)
+          assert p['use_lineart_2_style'] == 'false'  # lowercase!
+          assert p['use_2_0_style'] is True
+          assert p['upload_urls'] == ['https://x/a.pdf', 'https://x/b.pdf']
+          print('OK:', json.dumps(p, sort_keys=True))
+          PY
