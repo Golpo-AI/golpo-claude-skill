@@ -23,3 +23,7 @@ golpo-smoke-test-results.xlsx
 
 # Claude Code local settings (per-machine, do not commit)
 .claude/settings.local.json
+
+# Defensive: never accidentally commit a Golpo API key file
+.golpo/
+api_key
