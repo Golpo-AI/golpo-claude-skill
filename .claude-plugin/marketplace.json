@@ -10,7 +10,7 @@
       "name": "golpo",
       "source": "./plugins/golpo",
       "description": "Generate AI videos with Golpo from prompts, scripts, audio, or documents. Auto-downloads the rendered MP4 to ~/Golpo/videos/.",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "homepage": "https://video.golpoai.com",
       "category": "media",
       "tags": ["video", "ai-video", "explainer", "podcast-to-video"]

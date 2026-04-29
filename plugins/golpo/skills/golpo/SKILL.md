@@ -178,7 +178,9 @@ The helper:
 3. Streams `progress=N% status=<state>` lines while it polls — relay these to
    the user as short progress updates.
 4. **Auto-downloads the rendered MP4 to `~/Golpo/videos/`** by default.
-   Filename pattern: `YYYYMMDD-HHMMSS_<prompt-slug>_<video-id-short>.mp4`.
+   Filename pattern: `YYYYMMDD-HHMMSS_<title-slug>_<video-id-short>.mp4` —
+   the slug is derived from the API-canonical video title (same string the
+   user sees in `golpo.py list` and the Golpo dashboard).
    Override with `--output_dir <path>` or set `GOLPO_VIDEO_DIR` env var.
    Skip the download with `--no_download`.
 5. On success, prints `VIDEO_FILE=/abs/path.mp4` then `VIDEO_URL=<url>` and

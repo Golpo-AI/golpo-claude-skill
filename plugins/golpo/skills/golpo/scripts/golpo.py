@@ -107,8 +107,29 @@ def resolve_output_dir(cli_value):
     return DEFAULT_VIDEO_DIR
 
 
-def download_video(video_url, output_dir, prompt=None, video_id=None):
-    """Stream a video to disk. Returns the absolute Path on success, None on failure."""
+def fetch_video_meta(video_id):
+    """Fetch /videos/{id} metadata; return the unwrapped video dict or {} on failure.
+
+    Resilient — used to grab the API-canonical `title` for filename generation
+    without aborting the whole flow if the metadata call fails.
+    """
+    if not video_id:
+        return {}
+    try:
+        meta = api_request("GET", f"/videos/{video_id}", retry_5xx=True)
+    except SystemExit:
+        return {}
+    if isinstance(meta, dict):
+        return meta.get("video", meta) or {}
+    return {}
+
+
+def download_video(video_url, output_dir, title=None, video_id=None):
+    """Stream a video to disk. Returns the absolute Path on success, None on failure.
+
+    The filename is derived from the API-provided `title` (preferred) so it
+    matches what the user sees in the Golpo dashboard / list output.
+    """
     requests = lazy_requests()
     out_dir = pathlib.Path(output_dir).expanduser()
     try:
@@ -118,7 +139,7 @@ def download_video(video_url, output_dir, prompt=None, video_id=None):
         return None
 
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    parts = [ts, slugify(prompt) if prompt else "video"]
+    parts = [ts, slugify(title) if title else "video"]
     if video_id:
         parts.append(str(video_id)[:8])
     ext = pathlib.Path(video_url.split("?", 1)[0]).suffix or ".mp4"
@@ -378,17 +399,20 @@ def cmd_generate(args):
             print(f"status={status}")
             sys.stdout.flush()
         if status in TERMINAL_OK or video_url:
-            if not video_url and st.get("video_id"):
-                meta = api_request("GET", f"/videos/{st['video_id']}")
-                video_url = meta.get("video_url")
+            target_id = video_id or st.get("video_id")
+            meta_video = fetch_video_meta(target_id)
+            if not video_url:
+                video_url = meta_video.get("video_url")
             if video_url:
                 if not args.no_download:
+                    title = (meta_video.get("title")
+                             or payload.get("prompt"))
                     out_dir = resolve_output_dir(args.output_dir)
                     print(f"downloading -> {out_dir}", flush=True)
                     local = download_video(
                         video_url, out_dir,
-                        prompt=payload.get("prompt"),
-                        video_id=video_id or st.get("video_id"),
+                        title=title,
+                        video_id=target_id,
                     )
                     if local:
                         print(f"VIDEO_FILE={local}")
@@ -420,11 +444,12 @@ def cmd_get(args):
     video_url = video.get("video_url")
     if video_url:
         if not args.no_download:
+            title = video.get("title") or video.get("prompt")
             out_dir = resolve_output_dir(args.output_dir)
             print(f"downloading -> {out_dir}", flush=True)
             local = download_video(
                 video_url, out_dir,
-                prompt=video.get("title") or video.get("prompt"),
+                title=title,
                 video_id=args.video_id,
             )
             if local:

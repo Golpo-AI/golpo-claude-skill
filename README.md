@@ -156,8 +156,11 @@ Just talk to Claude in plain English:
 
 **Filename pattern:**
 ```
-YYYYMMDD-HHMMSS_<prompt-slug>_<video-id-short>.mp4
+YYYYMMDD-HHMMSS_<title-slug>_<video-id-short>.mp4
 ```
+
+The slug comes from the API-canonical video title (what `golpo.py list` and
+the Golpo dashboard show), so files match the names you see elsewhere.
 
 For example:
 ```

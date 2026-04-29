@@ -49,7 +49,9 @@ Claude will:
 
 Default destination: **`~/Golpo/videos/`**.
 
-Filename pattern: `YYYYMMDD-HHMMSS_<prompt-slug>_<video-id-short>.mp4`.
+Filename pattern: `YYYYMMDD-HHMMSS_<title-slug>_<video-id-short>.mp4` — the
+slug comes from the API-provided video title (matches what shows in `golpo.py
+list` and the Golpo dashboard).
 
 Example:
 ```

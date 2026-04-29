@@ -1,6 +1,6 @@
 {
   "name": "golpo",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Generate AI videos with Golpo from prompts, scripts, audio, or documents. Auto-downloads the rendered MP4 to ~/Golpo/videos/.",
   "author": {
     "name": "Golpo AI",
