@@ -3,7 +3,7 @@
 [![CI](https://github.com/Golpo-AI/golpo-claude-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/Golpo-AI/golpo-claude-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)]()
-[![Plugin: 0.1.2](https://img.shields.io/badge/plugin-v0.1.2-green.svg)]()
+[![Plugin: 0.1.3](https://img.shields.io/badge/plugin-v0.1.3-green.svg)]()
 
 > Generate AI videos with [Golpo](https://video.golpoai.com) directly from any
 > Claude Code conversation. Give Claude a prompt, a script, an audio file, or
@@ -372,7 +372,7 @@ golpo-claude-skill/                  # marketplace root
 | `ERROR: 422 script duration N min > timing M min` | Bump `--timing` higher than `N` |
 | `ERROR: 429 Rate limited` | Cap parallel jobs at 3; back off and retry |
 | `WARNING: download failed` | Hosted URL still printed; download manually with `curl` or retry `golpo.py get <video_id>` |
-| Job times out at 30 min | `--max_wait_seconds 5400` to extend, or resume later: `golpo.py status <JOB_ID>` |
+| Job times out at 90 min | `--max_wait_seconds 10800` to extend further, or resume later: `golpo.py status <JOB_ID>` |
 | Document URL fails on second use | Document URLs are **single-use**; re-upload the file |
 | `--use_lineart_2_style` and `--use_2_0_style` both set | Pick one — Sketch and Canvas are mutually exclusive |
 

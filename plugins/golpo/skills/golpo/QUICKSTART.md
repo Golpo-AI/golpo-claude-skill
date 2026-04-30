@@ -137,7 +137,7 @@ for the full list.
 | `ERROR: 422` with `timing` | Pass timing as a string: `--timing 0.5`, not `0.5` |
 | `ERROR: 422 script duration N min > timing M min` | Bump `--timing` higher than `N` |
 | `ERROR: 429` | Rate-limited; cap parallel jobs at 3 |
-| Job times out at 30 min | `--max_wait_seconds 5400` to extend, or resume: `golpo.py status <JOB_ID>` |
+| Job times out at 90 min | `--max_wait_seconds 10800` to extend further, or resume: `golpo.py status <JOB_ID>` |
 | Document URL fails on 2nd use | Document URLs are single-use; re-upload |
 
 ## Costs

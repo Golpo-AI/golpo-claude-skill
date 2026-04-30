@@ -478,8 +478,8 @@ def add_generate_args(p):
     for name, _ in GENERATE_LIST_FIELDS.items():
         p.add_argument(f"--{name}", action="append", default=None,
                        help="repeatable; pass once per item")
-    p.add_argument("--max_wait_seconds", type=int, default=1800,
-                   help="poll cap (default 30 min)")
+    p.add_argument("--max_wait_seconds", type=int, default=5400,
+                   help="poll cap in seconds (default 5400 = 90 min)")
     p.add_argument("--print_payload", action="store_true",
                    help="echo the JSON payload before submitting")
     p.add_argument("--output_dir", default=None,

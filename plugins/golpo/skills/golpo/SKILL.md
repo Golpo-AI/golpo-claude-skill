@@ -172,9 +172,10 @@ python3 .../golpo.py generate \
 
 The helper:
 1. Submits `POST /videos/generate` and prints `JOB_ID=...` and `VIDEO_ID=...`.
-2. Polls `GET /videos/status/{job_id}` with backoff (5 s → 30 s, capped at 30
-   min by default; use `--max_wait_seconds N` to extend). Polling is resilient
-   to transient 5xx responses (up to 5 retries with exponential backoff).
+2. Polls `GET /videos/status/{job_id}` with backoff (5 s → 30 s, capped at
+   **90 min** by default; use `--max_wait_seconds N` to extend further).
+   Polling is resilient to transient 5xx responses (up to 5 retries with
+   exponential backoff).
 3. Streams `progress=N% status=<state>` lines while it polls — relay these to
    the user as short progress updates.
 4. **Auto-downloads the rendered MP4 to `~/Golpo/videos/`** by default.
