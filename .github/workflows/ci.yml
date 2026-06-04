@@ -33,21 +33,41 @@ jobs:
         run: |
           python -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
           python -c "import json; json.load(open('plugins/golpo/.claude-plugin/plugin.json'))"
+          python -c "import json; json.load(open('.agents/plugins/marketplace.json'))"
+          python -c "import json; json.load(open('plugins/golpo/.codex-plugin/plugin.json'))"
 
       - name: Manifest cross-checks (versions in sync, names match)
         run: |
           python - <<'PY'
           import json
-          m = json.load(open('.claude-plugin/marketplace.json'))
-          p = json.load(open('plugins/golpo/.claude-plugin/plugin.json'))
-          plug = m['plugins'][0]
-          assert plug['name'] == p['name'], \
-              f"name mismatch: marketplace={plug['name']!r} plugin={p['name']!r}"
-          assert plug['version'] == p['version'], \
-              f"version mismatch: marketplace={plug['version']!r} plugin={p['version']!r}"
-          assert plug['source'].startswith('./'), \
-              f"plugin source must be a relative path starting with './' (got {plug['source']!r})"
-          print(f"OK: {plug['name']}@{plug['version']} from {plug['source']}")
+          claude_market = json.load(open('.claude-plugin/marketplace.json'))
+          claude_plug = json.load(open('plugins/golpo/.claude-plugin/plugin.json'))
+          codex_market = json.load(open('.agents/plugins/marketplace.json'))
+          codex_plug = json.load(open('plugins/golpo/.codex-plugin/plugin.json'))
+
+          c_entry = claude_market['plugins'][0]
+          assert c_entry['name'] == claude_plug['name'], \
+              f"Claude name mismatch: market={c_entry['name']!r} plugin={claude_plug['name']!r}"
+          assert c_entry['version'] == claude_plug['version'], \
+              f"Claude version mismatch: market={c_entry['version']!r} plugin={claude_plug['version']!r}"
+          assert isinstance(c_entry['source'], str) and c_entry['source'].startswith('./'), \
+              f"Claude plugin source must be a './' string (got {c_entry['source']!r})"
+
+          x_entry = codex_market['plugins'][0]
+          assert x_entry['name'] == codex_plug['name'], \
+              f"Codex name mismatch: market={x_entry['name']!r} plugin={codex_plug['name']!r}"
+          assert x_entry['version'] == codex_plug['version'], \
+              f"Codex version mismatch: market={x_entry['version']!r} plugin={codex_plug['version']!r}"
+          assert isinstance(x_entry['source'], dict), \
+              f"Codex plugin source must be an object (got {x_entry['source']!r})"
+          assert x_entry['source'].get('path', '').startswith('./'), \
+              f"Codex plugin source.path must start with './' (got {x_entry['source']!r})"
+
+          versions = {claude_plug['version'], claude_plug['version'], codex_plug['version'], x_entry['version'], c_entry['version']}
+          assert len(versions) == 1, f"versions out of sync: {versions}"
+          assert claude_plug['name'] == codex_plug['name'], \
+              f"plugin name diverged across manifests: {claude_plug['name']!r} vs {codex_plug['name']!r}"
+          print(f"OK: {claude_plug['name']}@{claude_plug['version']} (Claude + Codex manifests in sync)")
           PY
 
       - name: SKILL.md frontmatter sanity
@@ -63,7 +83,7 @@ jobs:
               fm[k.strip()] = v.strip()
           assert fm.get('name') == 'golpo', f"name field = {fm.get('name')!r}"
           desc = fm.get('description', '')
-          assert len(desc) > 50, f"description too short ({len(desc)} chars) — Claude needs this for trigger matching"
+          assert len(desc) > 50, f"description too short ({len(desc)} chars) — agents need this for trigger matching"
           print(f"OK: SKILL.md frontmatter valid; description length = {len(desc)}")
           PY
 

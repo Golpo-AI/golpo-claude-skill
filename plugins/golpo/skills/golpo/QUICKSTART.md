@@ -4,18 +4,26 @@ Five steps from zero to a finished video.
 
 ## 1. Install (once per machine)
 
-In the Claude Code terminal CLI:
+**Claude Code** — in the terminal CLI:
 
 ```text
 /plugin marketplace add Golpo-AI/golpo-claude-skill
 /plugin install golpo@GolpoSkill
 ```
 
+**Codex** — in a terminal:
+
+```bash
+codex plugin marketplace add Golpo-AI/golpo-claude-skill
+codex plugin install golpo --marketplace GolpoSkill
+```
+
 `golpo` is the plugin name; `GolpoSkill` is the marketplace name. Both are
 case-sensitive.
 
 > Already cloned the repo locally? Use the path:
-> `/plugin marketplace add /path/to/GolpoSkill`
+> `/plugin marketplace add /path/to/GolpoSkill` (Claude Code) or
+> `codex plugin marketplace add /path/to/GolpoSkill` (Codex).
 
 ## 2. First-time setup
 
@@ -27,7 +35,7 @@ Golpo API key. Get one at [video.golpoai.com](https://video.golpoai.com)
 The key gets saved to `~/.golpo/api_key` with `0600` permissions. To rotate
 later: `python3 ~/.claude/plugins/golpo/skills/golpo/scripts/golpo.py auth --key NEW --force`.
 
-## 3. Ask Claude to make a video
+## 3. Ask the agent to make a video
 
 The skill triggers on natural language. Try any of these:
 
@@ -38,7 +46,7 @@ summarize this PDF as a 1-minute video: /path/to/report.pdf
 hindi narration with english on-screen text, pythagorean theorem, canvas whiteboard
 ```
 
-Claude will:
+The agent will:
 1. Pick sensible defaults (30 s, 16:9, English, female narrator, Sketch Classic).
 2. Tell you what defaults it used so you can adjust.
 3. Submit the job and stream progress (`progress=42% status=generating`).
@@ -58,14 +66,14 @@ Example:
 ~/Golpo/videos/20260429-015405_why-is-the-sky-blue_a1b2c3d4.mp4
 ```
 
-Override per-job by saying "save it to `~/Desktop/clips/`" — Claude will pass
-`--output_dir ~/Desktop/clips/` to the helper. Override globally with:
+Override per-job by saying "save it to `~/Desktop/clips/`" — the agent will
+pass `--output_dir ~/Desktop/clips/` to the helper. Override globally with:
 
 ```bash
 export GOLPO_VIDEO_DIR=~/Desktop/clips
 ```
 
-If you don't want a local copy at all, ask Claude to "skip download" and it
+If you don't want a local copy at all, ask the agent to "skip download" and it
 will pass `--no_download`.
 
 ## 5. Useful follow-ups
@@ -80,7 +88,7 @@ will pass `--no_download`.
 
 ## What kinds of input are supported?
 
-| Input mode | Flags Claude uses | When to ask Claude |
+| Input mode | Flags the agent uses | What to ask for |
 |---|---|---|
 | Plain prompt | `--prompt "..."` | "Make a video about X" |
 | Custom script | `--prompt "..." --new_script "..."` | "Turn this script into a video: ..." |
@@ -145,12 +153,14 @@ for the full list.
 2 credits per minute of video, where 1 credit = $1 USD. So a 15-second video
 costs ~$0.50 and a 1-minute video costs $2.
 
-## Direct CLI use (without Claude)
+## Direct CLI use (without the agent)
 
-The helper works as a standalone CLI too. After installing the plugin:
+The helper works as a standalone CLI too. After installing the plugin (path
+is `~/.claude/plugins/...` on Claude Code, `~/.codex/plugins/...` on Codex):
 
 ```bash
 HELPER=~/.claude/plugins/golpo/skills/golpo/scripts/golpo.py
+# or: HELPER=~/.codex/plugins/golpo/skills/golpo/scripts/golpo.py
 
 python3 "$HELPER" check
 python3 "$HELPER" auth --key <KEY>

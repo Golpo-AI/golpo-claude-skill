@@ -1,21 +1,21 @@
-# Golpo Skill for Claude Code
+# Golpo Plugin for Claude Code and Codex
 
 [![CI](https://github.com/Golpo-AI/golpo-claude-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/Golpo-AI/golpo-claude-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)]()
-[![Plugin: 0.1.3](https://img.shields.io/badge/plugin-v0.1.3-green.svg)]()
+[![Plugin: 0.2.0](https://img.shields.io/badge/plugin-v0.2.0-green.svg)]()
 
-> Generate AI videos with [Golpo](https://video.golpoai.com) directly from any
-> Claude Code conversation. Give Claude a prompt, a script, an audio file, or
-> a PDF — Claude submits the job, polls until it's done, **downloads the MP4
+> Generate AI videos with [Golpo](https://video.golpoai.com) directly from
+> Claude Code **or** Codex. Give the agent a prompt, a script, an audio file,
+> or a PDF — it submits the job, polls until it's done, **downloads the MP4
 > to your computer**, and shows you the file path plus the hosted URL.
 
 ```text
-You:    "Make a 30-second video about why the sky is blue."
-Claude: ✓ Submitted (job 1b489b1c…). Polling…
-          status=generating … status=generating … status=completed
-        Saved to ~/Golpo/videos/20260429-015856_why-is-the-sky-blue_1b489b1c.mp4
-        Hosted at https://golpo-podcast-inputs.s3.us-east-2.amazonaws.com/files/894abde8-…mp4
+You:   "Make a 30-second video about why the sky is blue."
+Agent: ✓ Submitted (job 1b489b1c…). Polling…
+         status=generating … status=generating … status=completed
+       Saved to ~/Golpo/videos/20260429-015856_why-is-the-sky-blue_1b489b1c.mp4
+       Hosted at https://golpo-podcast-inputs.s3.us-east-2.amazonaws.com/files/894abde8-…mp4
 ```
 
 > Real transcript from a smoke test. Filename and URLs are unaltered.
@@ -44,8 +44,9 @@ Claude: ✓ Submitted (job 1b489b1c…). Polling…
 
 ## What it does
 
-The plugin registers a Claude Code skill named `golpo` with one helper script
-underneath. When you ask Claude to make a video, the skill:
+The plugin registers a skill named `golpo` (one helper script underneath) for
+both **Claude Code** and **Codex**. When you ask the agent to make a video,
+the skill:
 
 1. Verifies your environment (Python, `requests`, API key).
 2. Asks for your Golpo API key on first run, saves it to `~/.golpo/api_key`
@@ -70,7 +71,12 @@ It supports both Golpo engines:
 
 ## Install
 
-### Recommended — plugin marketplace
+The same repo ships two plugin manifests — one for Claude Code
+(`plugins/golpo/.claude-plugin/plugin.json`) and one for Codex
+(`plugins/golpo/.codex-plugin/plugin.json`) — pointing at the same skill.
+Install whichever matches the agent you use.
+
+### Claude Code
 
 In the Claude Code terminal CLI:
 
@@ -84,13 +90,45 @@ In the Claude Code terminal CLI:
 
 `/plugin update golpo` later when a new version ships.
 
-### Manual
+### Codex
+
+In a terminal:
+
+```bash
+codex plugin marketplace add Golpo-AI/golpo-claude-skill
+```
+
+Then in Codex:
+
+```text
+codex
+/plugins
+```
+
+Open the **GolpoSkill** marketplace tab, select **golpo**, and choose
+**Install plugin**.
+
+Or install everything from the CLI:
+
+```bash
+codex plugin install golpo --marketplace GolpoSkill
+```
+
+### Manual (Claude Code)
 
 ```bash
 git clone https://github.com/Golpo-AI/golpo-claude-skill.git ~/.claude/plugins/golpo
 ```
 
 Restart Claude Code.
+
+### Manual (Codex)
+
+```bash
+git clone https://github.com/Golpo-AI/golpo-claude-skill.git ~/.codex/plugins/golpo
+```
+
+Restart Codex.
 
 ### From a local checkout (for forks / dev)
 
@@ -100,6 +138,9 @@ cd golpo-claude-skill
 # In Claude Code:
 #   /plugin marketplace add /absolute/path/to/golpo-claude-skill
 #   /plugin install golpo@GolpoSkill
+# In Codex:
+#   codex plugin marketplace add /absolute/path/to/golpo-claude-skill
+#   codex plugin install golpo --marketplace GolpoSkill
 ```
 
 ### Requirements
@@ -114,14 +155,15 @@ cd golpo-claude-skill
 
 ## First run
 
-The first time you ask Claude to make a video:
+The first time you ask the agent to make a video:
 
-1. Claude runs `golpo.py check` and notices `key_configured=false`.
+1. It runs `golpo.py check` and notices `key_configured=false`.
 2. It explains that the skill needs your API key, then asks you to paste it.
 3. Behind the scenes it runs `golpo.py auth --key <YOUR_KEY>`.
 4. Subsequent invocations skip auth.
 
-The key lives at `~/.golpo/api_key` (mode `0600`). To rotate later:
+The key lives at `~/.golpo/api_key` (mode `0600`). To rotate later (replace
+`~/.claude/plugins` with `~/.codex/plugins` if you're on Codex):
 
 ```bash
 python3 ~/.claude/plugins/golpo/skills/golpo/scripts/golpo.py auth --key NEW_KEY --force
@@ -137,9 +179,9 @@ export GOLPO_API_KEY=...
 
 ## Usage examples
 
-Just talk to Claude in plain English:
+Just talk to the agent in plain English:
 
-| You say | Claude does |
+| You say | The agent does |
 |---|---|
 | "Make a 30-second video about why the sky is blue." | Prompt → Sketch Classic, default voice, 0.5 min |
 | "Make it a vertical short with marker style." | Adds `--video_type short --use_2_0_style true --image_style marker` |
@@ -267,10 +309,13 @@ Add a drawing-cursor effect on Canvas: `--pen_style stylus|marker|pen`.
 
 ## Direct CLI use
 
-The helper is a standalone CLI — Claude Code is just one front-end.
+The helper is a standalone CLI — Claude Code and Codex are just two
+front-ends. Path is `~/.claude/plugins/...` on Claude Code,
+`~/.codex/plugins/...` on Codex.
 
 ```bash
 HELPER=~/.claude/plugins/golpo/skills/golpo/scripts/golpo.py
+# or: HELPER=~/.codex/plugins/golpo/skills/golpo/scripts/golpo.py
 
 # Sanity check
 python3 "$HELPER" check
@@ -308,16 +353,21 @@ python3 "$HELPER" status <job_id>
 ## File map
 
 ```
-golpo-claude-skill/                  # marketplace root
+golpo-claude-skill/                  # repo root (hosts both marketplaces)
 ├── .claude-plugin/
-│   └── marketplace.json             # lists plugins in this repo
+│   └── marketplace.json             # Claude Code marketplace
+├── .agents/
+│   └── plugins/
+│       └── marketplace.json         # Codex marketplace
 ├── plugins/
-│   └── golpo/                       # plugin root
+│   └── golpo/                       # plugin root (shared)
 │       ├── .claude-plugin/
-│       │   └── plugin.json          # plugin manifest
+│       │   └── plugin.json          # Claude Code plugin manifest
+│       ├── .codex-plugin/
+│       │   └── plugin.json          # Codex plugin manifest
 │       └── skills/
-│           └── golpo/                # the skill
-│               ├── SKILL.md          # instructions Claude follows
+│           └── golpo/                # the skill (shared)
+│               ├── SKILL.md          # instructions the agent follows
 │               ├── QUICKSTART.md     # human-friendly cheat sheet
 │               ├── scripts/
 │               │   ├── golpo.py      # CLI helper
@@ -336,17 +386,20 @@ golpo-claude-skill/                  # marketplace root
 
 ## How the skill works internally
 
-1. **Trigger.** Claude Code matches the user's message against the `description`
-   field of [SKILL.md](plugins/golpo/skills/golpo/SKILL.md). The skill fires
-   on phrasing like "make a video", "create an explainer", "summarize this
-   PDF as a video", etc.
-2. **Bootstrap.** Claude runs `golpo.py check` to confirm Python, `requests`,
-   and the API key are in place.
-3. **Auth (first run).** If no key, Claude asks for it and saves it via
+1. **Trigger.** The agent (Claude Code or Codex) matches the user's message
+   against the `description` field of
+   [SKILL.md](plugins/golpo/skills/golpo/SKILL.md). The skill fires on
+   phrasing like "make a video", "create an explainer", "summarize this PDF
+   as a video", etc.
+2. **Bootstrap.** It runs `golpo.py check` to confirm Python, `requests`,
+   and the API key are in place. The helper uses `$CLAUDE_PLUGIN_ROOT` to
+   locate itself; Codex exposes this as a legacy-compatible env var, so the
+   same script works in both runtimes.
+3. **Auth (first run).** If no key, the agent asks for it and saves it via
    `golpo.py auth --key <KEY>`.
-4. **Plan.** Claude turns the user's intent into a concrete payload, defaulting
-   anything they didn't specify.
-5. **Upload.** For audio or document inputs, Claude calls `golpo.py upload`
+4. **Plan.** The agent turns the user's intent into a concrete payload,
+   defaulting anything they didn't specify.
+5. **Upload.** For audio or document inputs, it calls `golpo.py upload`
    per file. The helper does the two-step flow: POST to
    `/api/v1/videos/upload-file` to get a presigned S3 URL, then PUT the file
    to that URL.
@@ -356,8 +409,8 @@ golpo-claude-skill/                  # marketplace root
    exponentially (5 s → 30 s) and retries 5xx up to 5 times.
 7. **Download.** When the API returns `video_url`, the helper streams the MP4
    to `~/Golpo/videos/` (or your override) with a readable filename.
-8. **Report.** Helper prints `VIDEO_FILE=<path>` and `VIDEO_URL=<url>`. Claude
-   shows both to you with a clickable file link.
+8. **Report.** Helper prints `VIDEO_FILE=<path>` and `VIDEO_URL=<url>`. The
+   agent shows both to you with a clickable file link.
 
 ---
 
@@ -384,20 +437,30 @@ To run this from your own GitHub repo:
 
 1. Fork or clone this repo and push to your `<org>/<repo>`.
 2. Tell users:
-   ```
+   ```text
+   # Claude Code
    /plugin marketplace add <your-org>/<repo>
    /plugin install golpo@GolpoSkill
+
+   # Codex
+   codex plugin marketplace add <your-org>/<repo>
+   codex plugin install golpo --marketplace GolpoSkill
    ```
-3. When shipping changes, bump `version` in **both**
-   [plugins/golpo/.claude-plugin/plugin.json](plugins/golpo/.claude-plugin/plugin.json)
-   and [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json)
-   (keep them in sync), then optionally tag a release:
+3. When shipping changes, bump `version` in **all four** spots and keep them
+   in sync:
+   - [plugins/golpo/.claude-plugin/plugin.json](plugins/golpo/.claude-plugin/plugin.json)
+   - [plugins/golpo/.codex-plugin/plugin.json](plugins/golpo/.codex-plugin/plugin.json)
+   - [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json)
+   - [.agents/plugins/marketplace.json](.agents/plugins/marketplace.json)
+
+   Then optionally tag a release:
    ```bash
    git tag v0.2.0
    git push --tags
    ```
 
-End users update with `/plugin update golpo`.
+End users update with `/plugin update golpo` (Claude Code) or
+`codex plugin marketplace upgrade` (Codex).
 
 ---
 

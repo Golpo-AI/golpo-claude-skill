@@ -1,0 +1,38 @@
+{
+  "name": "golpo",
+  "version": "0.2.0",
+  "description": "Generate AI videos with Golpo from prompts, scripts, audio, or documents. Auto-downloads the rendered MP4 to ~/Golpo/videos/.",
+  "author": {
+    "name": "Golpo AI",
+    "email": "support@golpoai.com",
+    "url": "https://video.golpoai.com"
+  },
+  "homepage": "https://video.golpoai.com",
+  "repository": "https://github.com/Golpo-AI/golpo-claude-skill",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "golpo",
+    "ai-video",
+    "explainer",
+    "podcast-to-video",
+    "script-to-video"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Golpo Video",
+    "shortDescription": "Turn prompts, scripts, audio, or documents into AI videos.",
+    "longDescription": "Golpo turns a prompt, custom script, audio narration, or supporting documents (PDF/DOCX/PPTX/TXT) into a finished animated video. Codex picks sensible defaults (30s, 16:9, Sketch Classic, English) so most requests need no follow-up. The skill polls until the job is done, then auto-downloads the MP4 to ~/Golpo/videos/ and prints the hosted URL.",
+    "developerName": "Golpo AI",
+    "category": "Media",
+    "websiteURL": "https://video.golpoai.com",
+    "privacyPolicyURL": "https://video.golpoai.com/privacy",
+    "termsOfServiceURL": "https://video.golpoai.com/terms",
+    "defaultPrompt": [
+      "Make a 30-second video about why the sky is blue.",
+      "Summarize this PDF as a 1-minute vertical short.",
+      "Turn my narration audio into an animated explainer."
+    ],
+    "brandColor": "#0EA5E9"
+  }
+}
