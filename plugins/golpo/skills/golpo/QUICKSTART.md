@@ -15,7 +15,7 @@ Five steps from zero to a finished video.
 
 ```bash
 codex plugin marketplace add Golpo-AI/golpo-claude-skill
-codex plugin install golpo --marketplace GolpoSkill
+codex plugin add golpo@GolpoSkill
 ```
 
 `golpo` is the plugin name; `GolpoSkill` is the marketplace name. Both are

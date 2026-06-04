@@ -19,13 +19,13 @@
         "path": "./plugins/golpo"
       },
       "description": "Generate AI videos with Golpo from prompts, scripts, audio, or documents. Auto-downloads the rendered MP4 to ~/Golpo/videos/.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "homepage": "https://video.golpoai.com",
       "category": "Media",
       "keywords": ["video", "ai-video", "explainer", "podcast-to-video"],
       "policy": {
         "installation": "AVAILABLE",
-        "authentication": "ON_FIRST_USE"
+        "authentication": "ON_USE"
       }
     }
   ]

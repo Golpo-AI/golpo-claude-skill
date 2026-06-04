@@ -63,6 +63,13 @@ jobs:
           assert x_entry['source'].get('path', '').startswith('./'), \
               f"Codex plugin source.path must start with './' (got {x_entry['source']!r})"
 
+          # Codex CLI rejects unknown enum values at parse time; guard locally too.
+          policy = x_entry.get('policy', {})
+          valid_auth = {'ON_INSTALL', 'ON_USE'}
+          if 'authentication' in policy:
+              assert policy['authentication'] in valid_auth, \
+                  f"Codex policy.authentication must be one of {valid_auth} (got {policy['authentication']!r})"
+
           versions = {claude_plug['version'], claude_plug['version'], codex_plug['version'], x_entry['version'], c_entry['version']}
           assert len(versions) == 1, f"versions out of sync: {versions}"
           assert claude_plug['name'] == codex_plug['name'], \

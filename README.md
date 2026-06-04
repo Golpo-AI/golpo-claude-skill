@@ -111,7 +111,7 @@ Open the **GolpoSkill** marketplace tab, select **golpo**, and choose
 Or install everything from the CLI:
 
 ```bash
-codex plugin install golpo --marketplace GolpoSkill
+codex plugin add golpo@GolpoSkill
 ```
 
 ### Manual (Claude Code)
@@ -140,7 +140,7 @@ cd golpo-claude-skill
 #   /plugin install golpo@GolpoSkill
 # In Codex:
 #   codex plugin marketplace add /absolute/path/to/golpo-claude-skill
-#   codex plugin install golpo --marketplace GolpoSkill
+#   codex plugin add golpo@GolpoSkill
 ```
 
 ### Requirements
@@ -444,7 +444,7 @@ To run this from your own GitHub repo:
 
    # Codex
    codex plugin marketplace add <your-org>/<repo>
-   codex plugin install golpo --marketplace GolpoSkill
+   codex plugin add golpo@GolpoSkill
    ```
 3. When shipping changes, bump `version` in **all four** spots and keep them
    in sync:
